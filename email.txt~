@@ -1,0 +1,44 @@
+pop3:   https://www.ietf.org/rfc/rfc1939.txt
+smtp:   https://tools.ietf.org/html/rfc2821
+
+Assignment #1
+
+Option 1:  Building a Multi-Threaded Web Server and simple browser
+Option 2:  Mail Client (send and receive)
+Option 3: FTP server and Client
+Requirements:
+1) read the protocols
+2) implement the required protocol by writing network programs
+3) write a short report on how you implement the protocol and develop the network programs.
+Notes
+1) you should make an appointment with the TA for face2face demos
+2) Just implement the basic components of the protocols.
+3) sophisticated GUI is not a must!
+References:
+The textbook and the Companion Website of the Textbook.
+Deadline:
+30 April 2015
+
+
+
+GUI
+http://www.cnblogs.com/kaituorensheng/p/3287652.html
+
+
+
+
+
+
+
+
+http://www.liaoxuefeng.com/wiki/001374738125095c955c1e6d8bb493182103fac9270762a000/001408244819215430d726128bf4fa78afe2890bec57736000
+
+http://jingyan.baidu.com/article/b24f6c822784b886bfe5dabe.html
+http://www.chinaunix.net/old_jh/55/575710.html
+http://my.oschina.net/guol/blog/129913
+http://www.jb51.net/article/49216.htm
+
+
+
+
+http://www.jb51.net/article/57605.htm
