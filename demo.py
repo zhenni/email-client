@@ -1,13 +1,23 @@
 #!/usr/bin/python
 
+## 126 163
+
 import Tkinter
 from Tkinter import *
 from socket import socket, AF_INET, SOCK_STREAM, IPPROTO_TCP
 import base64
 import email
+from email import encoders
+from email.header import Header
 from email.parser import Parser
 from email.header import decode_header
-from email.utils import parseaddr
+from email.utils import parseaddr, formataddr
+
+import mimetypes  
+from email.mime.text import MIMEText  
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
 
 #GUI
 root = Tkinter.Tk()
@@ -71,9 +81,13 @@ subject = StringVar()
 entry_subject = Entry(frame_send, width=27, textvariable = subject)
 entry_subject.grid(row=3, column=1, columnspan=3, sticky='w')
 
-entry_mail_text = Text(frame_send, width=31)
-entry_mail_text.grid(row=4, column=1, columnspan=3, rowspan=2, sticky='w')
+entry_send_mail_text = Text(frame_send, width=31)
+entry_send_mail_text.grid(row=4, column=1, columnspan=3, rowspan=2, sticky='w')
 
+
+def _format_addr(s):
+     (name, addr) = parseaddr(s)
+     return formataddr((Header(name, 'utf-8').encode(), addr))
 
 ########################################## SEND via SMTP ################################################3
 def send():
@@ -86,8 +100,21 @@ def send():
 	SENDER = USER_NAME+"@"+MAIL_SERVER
 	RECEIVER = reciever_email.get()
 	SUBJECT = subject.get()
-	MAIL_TEXT = entry_mail_text.get("1.0", END)
+	mail_text = entry_send_mail_text.get(1.0, END)
+
+	mime_msg = MIMEMultipart('alternative')
+	mime_msg["From"] = _format_addr(SENDER)
+	mime_msg["To"] = _format_addr(RECEIVER)
+	mime_msg["Subject"] = Header(SUBJECT, 'utf-8').encode()	
+	mime_msg.attach(MIMEText(mail_text, 'plain', 'utf-8'))
 	
+	#mimetext=MIMEText(mail_text)
+	#mime_msg.attach(mimetext)
+	MAIL_TEXT = mime_msg.as_string()
+
+
+	
+
 	s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
 	s.connect(SMTP_HOST)
 	print s.recv(1024)
@@ -112,12 +139,13 @@ def send():
 	s.sendall("DATA\r\n")
 	print s.recv(1024)
 
-	s.sendall("From: "+SENDER+"\r\n")
-	s.sendall("To: "+RECEIVER+"\r\n")
-	s.sendall("Subject: "+SUBJECT+"\r\n")
-	s.sendall("\r\n")
-	s.sendall(MAIL_TEXT+"\r\n")
-	s.sendall(".\r\n")
+#	s.sendall("From: "+SENDER+"\r\n")
+#	s.sendall("To: "+RECEIVER+"\r\n")
+#	s.sendall("Subject: "+SUBJECT+"\r\n")
+#	s.sendall("\r\n")
+#	s.sendall(MAIL_TEXT+"\r\n")
+#	s.sendall(".\r\n")
+	s.sendall(MAIL_TEXT+"\r\n.\r\n")
 	print s.recv(1024)
 
 	s.sendall("QUIT\r\n")
@@ -154,7 +182,7 @@ label_mail_num_range=Label(frame_recv, textvariable=mail_num_range)
 label_mail_num_range.grid(row=3, column=0, columnspan=4, sticky='w')
 label_mail_num_range.grid_forget()
 
-entry_mail_text = Text(frame_recv, width=100)
+entry_recv_mail_text = Text(frame_recv, width=100)
 
 ##parser and printer
 
@@ -243,8 +271,8 @@ def recieve():
 
 	
 
-	entry_mail_text.grid(row=4, column=1, columnspan=3, rowspan=2, sticky='w')
-	entry_mail_text.insert(1.0, mail_msg)
+	entry_recv_mail_text.grid(row=4, column=1, columnspan=3, rowspan=2, sticky='w')
+	entry_recv_mail_text.insert(1.0, mail_msg)
 	
 	
 
