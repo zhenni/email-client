@@ -18,7 +18,8 @@ print PASS_WORD
 
 s.connect(SMTP_HOST)
 print s.recv(1024)
-s.setblocking(1)
+#s.setblocking(1)
+s.settimeout(2)
 s.sendall("HELO smtp."+MAIL_SERVER+"\r\n")
 print s.recv(1024)
 

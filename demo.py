@@ -37,7 +37,11 @@ frame_send = Frame(root)
 frame_recv = Frame(root)
 frame_sel.grid(row=1, sticky='w')
 
+status_bar = StringVar()
+label_status_bar = Label(root, textvariable=status_bar)
+label_status_bar.grid(row=3, sticky='ws')
 
+#select
 def get_frame_recv():
 	frame_recv.grid(row=2)
 	frame_send.grid_forget()
@@ -112,45 +116,55 @@ def send():
 	#mime_msg.attach(mimetext)
 	MAIL_TEXT = mime_msg.as_string()
 
-
-	
-
 	s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
-	s.connect(SMTP_HOST)
-	print s.recv(1024)
-	s.setblocking(1)
-	s.sendall("HELO smtp."+MAIL_SERVER+"\r\n")
-	print s.recv(1024)
+	try:
+		s.connect(SMTP_HOST)
+		print s.recv(1024)
+		#s.setblocking(1)
+		s.settimeout(10)
+		s.sendall("HELO smtp."+MAIL_SERVER+"\r\n")
+		print s.recv(1024)
+	
+		s.sendall("AUTH LOGIN\r\n")
+		print s.recv(1024)
+	
+		s.sendall(USER_NAME_BASE64)
+		print s.recv(1024)
+		s.sendall(PASS_WORD_BASE64)
+		print s.recv(1024)
+	
+		s.sendall("MAIL from: <"+SENDER+">"+"\r\n")
+		print s.recv(1024)
+	
+		s.sendall("RCPT to: <"+RECEIVER+">\r\n")
+		print s.recv(1024)
+	
+		s.sendall("DATA\r\n")
+		print s.recv(1024)
+	
+	#	s.sendall("From: "+SENDER+"\r\n")
+	#	s.sendall("To: "+RECEIVER+"\r\n")
+	#	s.sendall("Subject: "+SUBJECT+"\r\n")
+	#	s.sendall("\r\n")
+	#	s.sendall(MAIL_TEXT+"\r\n")
+	#	s.sendall(".\r\n")
+		s.sendall(MAIL_TEXT+"\r\n.\r\n")
+		print s.recv(1024)
+	
+		s.sendall("QUIT\r\n")
+		print s.recv(1024)
+		s.close()
+	
+		status_bar.set("OK")
+		label_status_bar["fg"]="green"
+	except Exception as e:
+		print e
+		
+		status_bar.set("Sorry. "+str(e))
+		label_status_bar["fg"]="red"
 
-	s.sendall("AUTH LOGIN\r\n")
-	print s.recv(1024)
+		s.close()
 
-	s.sendall(USER_NAME_BASE64)
-	print s.recv(1024)
-	s.sendall(PASS_WORD_BASE64)
-	print s.recv(1024)
-
-	s.sendall("MAIL from: <"+SENDER+">"+"\r\n")
-	print s.recv(1024)
-
-	s.sendall("RCPT to: <"+RECEIVER+">\r\n")
-	print s.recv(1024)
-
-	s.sendall("DATA\r\n")
-	print s.recv(1024)
-
-#	s.sendall("From: "+SENDER+"\r\n")
-#	s.sendall("To: "+RECEIVER+"\r\n")
-#	s.sendall("Subject: "+SUBJECT+"\r\n")
-#	s.sendall("\r\n")
-#	s.sendall(MAIL_TEXT+"\r\n")
-#	s.sendall(".\r\n")
-	s.sendall(MAIL_TEXT+"\r\n.\r\n")
-	print s.recv(1024)
-
-	s.sendall("QUIT\r\n")
-	print s.recv(1024)
-	s.close()
 	return
 ####################################################################################################
 
@@ -238,43 +252,52 @@ def decode_str(s):
 
 def recieve():
 	s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
-	label_mail_num_range.grid(row=3, column=0, columnspan=5, sticky='w')
-
-	MAIL_SERVER = email_server.get()
-	POP3_HOST = ("pop."+MAIL_SERVER, 110)
-	USER_NAME = username.get()
-	PASS_WORD = password.get()
-
-	s.connect(POP3_HOST)
-	print s.recv(1024)
-	s.setblocking(1)
-	s.sendall("USER "+USER_NAME+"\r\n")
-	print s.recv(1024)
-	s.sendall("PASS "+PASS_WORD+"\r\n")
-	login_recv = s.recv(1024)
-	print login_recv
-	num = re.findall(r'(\w*[0-9]+)\w*',login_recv)
-	mail_num = int(num[0])
-	mail_num_range.set("There are "+str(mail_num)+" emails.")
 	
-	retr_index = str(mail_num)
-	print retr_index
-	s.sendall("RETR "+retr_index+"\r\n")
-	msg = ""
-	while True:
-		t= s.recv(1024)
-		msg += t
-		if t[-3:] == ".\r\n": break
-	msg_to_parse = msg[msg.find("\n")+1:-3]
-	msg_final = Parser().parsestr(msg_to_parse)
-	mail_msg = print_info(msg_final)
+	try:
+		label_mail_num_range.grid(row=3, column=0, columnspan=5, sticky='w')
 
-	
+		MAIL_SERVER = email_server.get()
+		POP3_HOST = ("pop."+MAIL_SERVER, 110)
+		USER_NAME = username.get()
+		PASS_WORD = password.get()
 
-	entry_recv_mail_text.grid(row=4, column=1, columnspan=3, rowspan=2, sticky='w')
-	entry_recv_mail_text.insert(1.0, mail_msg)
+		s.connect(POP3_HOST)
+		print s.recv(1024)
+		#s.setblocking(1)
+		s.settimeout(10)
+		s.sendall("USER "+USER_NAME+"\r\n")
+		print s.recv(1024)
+		s.sendall("PASS "+PASS_WORD+"\r\n")
+		login_recv = s.recv(1024)
+		print login_recv
+		num = re.findall(r'(\w*[0-9]+)\w*',login_recv)
+		mail_num = int(num[0])
+		mail_num_range.set("There are "+str(mail_num)+" emails.")
+		
+		retr_index = str(mail_num)
+		print retr_index
+		s.sendall("RETR "+retr_index+"\r\n")
+		msg = ""
+		while True:
+			t= s.recv(1024)
+			msg += t
+			if t[-3:] == ".\r\n": break
+		msg_to_parse = msg[msg.find("\n")+1:-3]
+		msg_final = Parser().parsestr(msg_to_parse)
+		mail_msg = print_info(msg_final)
 	
+		entry_recv_mail_text.grid(row=4, column=1, columnspan=3, rowspan=2, sticky='w')
+		entry_recv_mail_text.insert(1.0, mail_msg)
 	
+		status_bar.set("OK")
+		label_status_bar["fg"]="green"
+
+	except Exception as e:
+		print e
+		s.close()
+		
+		status_bar.set("Sorry. "+str(e))
+		label_status_bar["fg"]="red"
 
 	return
 ################################################################################################
